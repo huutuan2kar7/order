@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Tra Cứu Đơn Hàng - Bếp Việt Online{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center mb-4">
+                <h3 class="fw-bold mb-2">
+                    <i class="fa-solid fa-magnifying-glass-location text-orange me-2"></i> Tra Cứu Đơn Hàng
+                </h3>
+                <p class="text-muted small mb-4">
+                    Nhập mã đơn hàng (ví dụ: <code>ORD-2026...</code>) hoặc số điện thoại bạn đã dùng để đặt món.
+                </p>
+
+                <form action="{{ url_for('track_order') }}" method="GET" class="d-flex gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-hashtag text-muted"></i></span>
+                        <input type="text" name="code" value="{{ query }}" class="form-control" placeholder="Mã đơn hàng hoặc Số điện thoại" required>
+                    </div>
+                    <button type="submit" class="btn btn-orange px-4 fw-bold text-nowrap rounded-3">
+                        <i class="fa-solid fa-search me-1"></i> Tra Cứu
+                    </button>
+                </form>
+            </div>
+
+            {% if searched %}
+                {% if order %}
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+                        <div>
+                            <span class="badge bg-orange rounded-pill mb-1">Mã: {{ order.order_code }}</span>
+                            <h5 class="fw-bold mb-0">{{ order.customer_name }} - {{ order.customer_phone }}</h5>
+                        </div>
+                        <div>
+                            {% if order.status == 'pending' %}
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-clock me-1"></i> Chờ duyệt</span>
+                            {% elif order.status == 'confirmed' %}
+                                <span class="badge bg-info text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-check me-1"></i> Đã nhận</span>
+                            {% elif order.status == 'cooking' %}
+                                <span class="badge bg-primary px-3 py-2 rounded-pill"><i class="fa-solid fa-fire-burner me-1"></i> Đang nấu</span>
+                            {% elif order.status == 'delivering' %}
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-motorcycle me-1"></i> Đang giao</span>
+                            {% elif order.status == 'completed' %}
+                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-check-double me-1"></i> Hoàn thành</span>
+                            {% else %}
+                                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-xmark me-1"></i> Đã hủy</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3 small">
+                        <strong>Địa chỉ nhận:</strong> {{ order.customer_address }}<br>
+                        <strong>Thời gian đặt:</strong> {{ order.created_at.strftime('%H:%M:%S ngày %d/%m/%Y') }}<br>
+                        <strong>Thanh toán:</strong> {{ order.payment_method }}
+                    </div>
+
+                    <h6 class="fw-bold">Món đã đặt:</h6>
+                    <ul class="list-group list-group-flush mb-3">
+                        {% for item in order.items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>{{ item.food_name }} <span class="badge bg-light text-dark border">x{{ item.quantity }}</span></span>
+                            <span class="fw-semibold">{{ item.subtotal | format_currency }}</span>
+                        </li>
+                        {% endfor %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bg-light fw-bold">
+                            <span>Tổng thanh toán:</span>
+                            <span class="text-orange fs-5">{{ order.total_price | format_currency }}</span>
+                        </li>
+                    </ul>
+
+                    <div class="text-center">
+                        <a href="{{ url_for('order_success', order_code=order.order_code) }}" class="btn btn-outline-orange rounded-pill px-4">
+                            <i class="fa-solid fa-eye me-1"></i> Xem Màn Hình Tiến Trình Trực Tiếp
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning text-center rounded-4 py-4">
+                    <i class="fa-solid fa-triangle-exclamation fs-2 mb-2"></i>
+                    <p class="mb-0 fw-semibold">Không tìm thấy đơn hàng nào khớp với thông tin: "{{ query }}"</p>
+                    <small>Vui lòng kiểm tra lại mã đơn hoặc số điện thoại.</small>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

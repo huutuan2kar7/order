@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Quản Trị Bếp Việt - Quản Lý & Phân Tích Đơn Hàng{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    <!-- Topbar -->
+    <header class="navbar navbar-dark bg-dark sticky-top p-2 shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fw-bold d-flex align-items-center gap-2" href="{{ url_for('admin_dashboard') }}">
+                <i class="fa-solid fa-utensils text-orange"></i>
+                <span>BẾP<span class="text-orange">VIỆT</span> <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">ADMIN</span></span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Live Network Status -->
+                <div class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+                    <span class="pulse-indicator"></span>
+                    <span class="small fw-semibold">Truyền Thông Mạng Trực Tuyến</span>
+                </div>
+
+                <a href="{{ url_for('index') }}" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Xem Trang Khách
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-white sidebar shadow-sm min-vh-100 p-0 border-end">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column gap-1 px-2">
+                        <li class="nav-item">
+                            <a class="nav-link admin-nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fa-solid fa-gauge-high me-2 text-primary"></i> Tổng Quan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link admin-nav-link {% if request.endpoint == 'admin_orders' %}active{% endif %}" href="{{ url_for('admin_orders') }}">
+                                <i class="fa-solid fa-receipt me-2 text-success"></i> Quản Lý Đơn Hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link admin-nav-link {% if request.endpoint == 'admin_menu' %}active{% endif %}" href="{{ url_for('admin_menu') }}">
+                                <i class="fa-solid fa-bowl-food me-2 text-warning"></i> Quản Lý Thực Đơn
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link admin-nav-link {% if request.endpoint == 'admin_analytics' %}active{% endif %}" href="{{ url_for('admin_analytics') }}">
+                                <i class="fa-solid fa-chart-pie me-2 text-danger"></i> Báo Cáo & Đồ Thị (Numpy/Pandas/Matplotlib)
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="px-3 mt-4 pt-4 border-top">
+                        <h6 class="text-uppercase text-muted fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Hệ thống & CSDL</h6>
+                        <ul class="list-unstyled small text-muted mt-2">
+                            <li class="mb-1"><i class="fa-solid fa-database text-info me-1"></i> CSDL: <strong>MySQL / SQLite</strong></li>
+                            <li class="mb-1"><i class="fa-brands fa-python text-warning me-1"></i> Backend: <strong>Python Flask</strong></li>
+                            <li class="mb-1"><i class="fa-solid fa-chart-line text-success me-1"></i> Data: <strong>Pandas & Numpy</strong></li>
+                            <li class="mb-1"><i class="fa-solid fa-image text-danger me-1"></i> Plot: <strong>Matplotlib</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Admin Content Area -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

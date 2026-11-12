@@ -1,0 +1,129 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <h2 class="h3 fw-bold mb-0">Quản Lý Thực Đơn & Món Ăn</h2>
+    <div>
+        <button class="btn btn-orange rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addFoodModal">
+            <i class="fa-solid fa-plus me-1"></i> Thêm Món Mới
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Tên Món Ăn</th>
+                    <th>Danh Mục</th>
+                    <th>Giá Bán</th>
+                    <th>Đánh Giá</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-center">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for food in foods %}
+                <tr>
+                    <td>
+                        <img src="{{ food.image_url }}" alt="{{ food.name }}" class="rounded-3 shadow-sm" style="width: 55px; height: 55px; object-fit: cover;">
+                    </td>
+                    <td>
+                        <div class="fw-bold">{{ food.name }}</div>
+                        <div class="small text-muted text-truncate" style="max-width: 280px;">{{ food.description }}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ food.category.name }}</span>
+                    </td>
+                    <td class="fw-bold text-orange">{{ food.price | format_currency }}</td>
+                    <td>
+                        <span class="text-warning small"><i class="fa-solid fa-star me-1"></i>{{ food.rating }}</span>
+                    </td>
+                    <td>
+                        {% if food.is_available %}
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 rounded-pill px-3">
+                                Còn hàng
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 rounded-pill px-3">
+                                Tạm hết hàng
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <!-- Nút Đổi trạng thái còn/hết -->
+                            <form action="{{ url_for('admin_toggle_food', food_id=food.id) }}" method="POST">
+                                <button type="submit" class="btn btn-sm {% if food.is_available %}btn-outline-warning{% else %}btn-outline-success{% endif %} rounded-pill px-2" title="Đổi trạng thái">
+                                    <i class="fa-solid {% if food.is_available %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                            </form>
+                            <!-- Nút Xóa món -->
+                            <form action="{{ url_for('admin_delete_food', food_id=food.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa món này khỏi thực đơn?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Xóa món">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Thêm Món Mới -->
+<div class="modal fade" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="addFoodModalLabel">
+                    <i class="fa-solid fa-utensils text-orange me-2"></i> Thêm Món Ăn Mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin_add_food') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Tên món ăn <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="Ví dụ: Phở Gà Đồi Lá Chanh" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" name="price" class="form-control" placeholder="Ví dụ: 45000" min="1000" step="1000" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">Danh mục <span class="text-danger">*</span></label>
+                            <select name="category_id" class="form-select" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Đường dẫn ảnh (URL Image)</label>
+                        <input type="url" name="image_url" class="form-control" placeholder="https://images.unsplash.com/...">
+                        <div class="form-text small">Để trống để sử dụng ảnh mặc định món ăn ngon miệng.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Mô tả nguyên liệu / hương vị</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Ghi chú thành phần, hương vị đặc trưng của món ăn..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-orange rounded-pill px-4 fw-bold">Lưu Món Vào CSDL</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

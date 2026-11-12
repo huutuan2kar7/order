@@ -1,0 +1,317 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">Bảng Điều Khiển Tổng Quan</h2>
+        <div class="small text-muted">Hệ thống đồ thị sẽ tự động tính toán và vẽ lại tức thì khi có đơn mới!</div>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+        <button class="btn btn-orange btn-sm rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createOrderModalDashboard">
+            <i class="fa-solid fa-plus-circle me-1"></i> Tự Nhập Đơn Mới
+        </button>
+        <a href="{{ url_for('admin_analytics') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold">
+            <i class="fa-solid fa-chart-line me-1"></i> Xem 5 Biểu Đồ Thống Kê
+        </a>
+    </div>
+</div>
+
+<!-- Real-time Network Alert Banner for New Orders -->
+<div id="newOrderNotification" class="alert alert-warning border-warning shadow-sm rounded-4 p-3 mb-4" style="display: none;">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="spinner-grow text-danger" role="status"></div>
+            <div>
+                <strong class="text-dark fs-6" id="newOrderMsg">Có đơn hàng mới vừa đặt trực tuyến qua mạng!</strong>
+                <div class="small text-muted" id="newOrderDetail">Khách hàng vừa gửi đơn đặt món.</div>
+            </div>
+        </div>
+        <button class="btn btn-dark btn-sm rounded-pill px-3" onclick="location.reload()">
+            <i class="fa-solid fa-arrows-rotate me-1"></i> Tải Lại Danh Sách
+        </button>
+    </div>
+</div>
+
+<!-- KPI Cards Grid (Tính toán từ Pandas & Numpy) -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-semibold small">Tổng Doanh Thu Hợp Lệ</span>
+                <div class="kpi-icon bg-success bg-opacity-10 text-success rounded-3 p-2">
+                    <i class="fa-solid fa-sack-dollar fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">{{ kpis.total_revenue | format_currency }}</h3>
+            <div class="small text-muted">
+                <i class="fa-solid fa-calculator text-primary me-1"></i> Tính bằng <code>numpy.sum</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-semibold small">Tổng Số Đơn Hàng</span>
+                <div class="kpi-icon bg-primary bg-opacity-10 text-primary rounded-3 p-2">
+                    <i class="fa-solid fa-receipt fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">{{ kpis.total_orders }} đơn</h3>
+            <div class="small text-muted">
+                <span class="text-success fw-bold">{{ kpis.valid_orders_count }}</span> hoàn thành, 
+                <span class="text-danger fw-bold">{{ kpis.cancelled_orders_count }}</span> hủy
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-semibold small">Giá Trị Đơn Trung Bình (AOV)</span>
+                <div class="kpi-icon bg-warning bg-opacity-10 text-warning rounded-3 p-2">
+                    <i class="fa-solid fa-chart-simple fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">{{ kpis.mean_order_value | format_currency }}</h3>
+            <div class="small text-muted">
+                <i class="fa-solid fa-square-root-variable text-warning me-1"></i> Trung vị: <strong>{{ kpis.median_order_value | format_currency }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100 kpi-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-semibold small">Đơn Đang Xử Lý</span>
+                <div class="kpi-icon bg-danger bg-opacity-10 text-danger rounded-3 p-2">
+                    <i class="fa-solid fa-bell-concierge fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">{{ pending_count + cooking_count + delivering_count }} đơn</h3>
+            <div class="small text-muted">
+                <span class="badge bg-warning text-dark">{{ pending_count }} chờ</span>
+                <span class="badge bg-primary">{{ cooking_count }} nấu</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Biểu đồ Xu hướng Doanh Thu (Matplotlib Output) -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">
+            <i class="fa-solid fa-chart-area text-orange me-2"></i> Xu Hướng Doanh Thu (Matplotlib & Numpy Polyfit Tự Động Vẽ)
+        </h5>
+        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">Tự động cập nhật</span>
+    </div>
+    <div class="text-center">
+        <img src="{{ trend_chart }}" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 400px; object-fit: contain;" alt="Doanh thu theo ngày">
+    </div>
+</div>
+
+<!-- Bảng Đơn Hàng Gần Đây -->
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <h5 class="fw-bold mb-0">
+            <i class="fa-solid fa-clock-rotate-left text-orange me-2"></i> Đơn Hàng Gần Đây Nhất
+        </h5>
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            Quản lý toàn bộ {{ kpis.total_orders }} đơn
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã Đơn</th>
+                    <th>Khách Hàng</th>
+                    <th>Địa Chỉ</th>
+                    <th>Tổng Tiền</th>
+                    <th>Thanh Toán</th>
+                    <th>Trạng Thái</th>
+                    <th>Thời Gian</th>
+                    <th class="text-center">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td><strong class="text-orange">#{{ order.order_code }}</strong></td>
+                    <td>
+                        <div class="fw-semibold">{{ order.customer_name }}</div>
+                        <div class="small text-muted">{{ order.customer_phone }}</div>
+                    </td>
+                    <td><div class="small text-truncate" style="max-width: 200px;">{{ order.customer_address }}</div></td>
+                    <td class="fw-bold">{{ order.total_price | format_currency }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ order.payment_method }}</span></td>
+                    <td>
+                        {% if order.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                        {% elif order.status == 'confirmed' %}
+                            <span class="badge bg-info text-dark">Đã nhận</span>
+                        {% elif order.status == 'cooking' %}
+                            <span class="badge bg-primary">Đang nấu</span>
+                        {% elif order.status == 'delivering' %}
+                            <span class="badge bg-warning text-dark">Đang giao</span>
+                        {% elif order.status == 'completed' %}
+                            <span class="badge bg-success">Hoàn thành</span>
+                        {% else %}
+                            <span class="badge bg-danger">Đã hủy</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ order.created_at.strftime('%H:%M %d/%m') }}</td>
+                    <td class="text-center">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-dark dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
+                                Đổi Trạng Thái
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li>
+                                    <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="status" value="confirmed">
+                                        <button class="dropdown-item small" type="submit"><i class="fa-solid fa-check text-info me-2"></i> Xác nhận</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="status" value="cooking">
+                                        <button class="dropdown-item small" type="submit"><i class="fa-solid fa-fire-burner text-primary me-2"></i> Nấu món</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="status" value="delivering">
+                                        <button class="dropdown-item small" type="submit"><i class="fa-solid fa-motorcycle text-warning me-2"></i> Bàn giao shipper</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="status" value="completed">
+                                        <button class="dropdown-item small" type="submit"><i class="fa-solid fa-check-double text-success me-2"></i> Hoàn thành</button>
+                                    </form>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="status" value="cancelled">
+                                        <button class="dropdown-item small text-danger" type="submit"><i class="fa-solid fa-xmark me-2"></i> Hủy đơn</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        Chưa có đơn hàng nào được ghi nhận. Bấm <strong>"Tự Nhập Đơn Mới"</strong> phía trên để tạo đơn và xem đồ thị tự cập nhật!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Nhập Đơn Nhanh từ Dashboard -->
+<div class="modal fade" id="createOrderModalDashboard" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-receipt text-orange me-2"></i> Tự Nhập Đơn Hàng Mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form action="{{ url_for('admin_create_order_manual') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Tên khách hàng <span class="text-danger">*</span></label>
+                            <input type="text" name="customer_name" class="form-control" placeholder="Nguyễn Văn A" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" name="customer_phone" class="form-control" placeholder="0912345678" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Địa chỉ nhận món</label>
+                            <input type="text" name="customer_address" class="form-control" value="Tại quán / Giao hàng">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Trạng thái đơn</label>
+                            <select name="status" class="form-select">
+                                <option value="completed" selected>Hoàn thành (Tính vào doanh thu ngay)</option>
+                                <option value="pending">Chờ duyệt</option>
+                                <option value="cooking">Đang nấu</option>
+                                <option value="delivering">Đang giao</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Phương thức thanh toán</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="COD">Tiền mặt (COD)</option>
+                                <option value="BANK_TRANSFER">Chuyển khoản QR</option>
+                                <option value="MOMO">Ví MoMo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-2">Chọn món ăn:</h6>
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-8">
+                            <select name="food_id[]" class="form-select" required>
+                                <option value="" disabled selected>-- Chọn món ăn --</option>
+                                {% for f in foods %}
+                                <option value="{{ f.id }}">{{ f.name }} ({{ f.price | format_currency }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group">
+                                <span class="input-group-text small">Số lượng</span>
+                                <input type="number" name="quantity[]" class="form-control text-center" value="1" min="1" max="20" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-orange rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-check me-1"></i> Lưu Đơn & Cập Nhật Biểu Đồ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    if (!!window.EventSource) {
+        const source = new EventSource('/api/orders/live-stream');
+        let initialLoad = true;
+
+        source.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.event === 'new_order') {
+                if (!initialLoad) {
+                    const banner = document.getElementById('newOrderNotification');
+                    const msg = document.getElementById('newOrderDetail');
+                    msg.innerHTML = `Đơn mới <strong>#${data.order.order_code}</strong> từ khách hàng <strong>${data.order.customer_name}</strong> (${data.order.total_price.toLocaleString('vi-VN')} đ)`;
+                    banner.style.display = 'block';
+                }
+                initialLoad = false;
+            }
+        };
+    }
+</script>
+{% endblock %}

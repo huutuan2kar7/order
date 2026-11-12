@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Đặt Hàng Thành Công - #{{ order.order_code }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Thẻ thông báo thành công -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center mb-4">
+                <div class="success-icon mb-3">
+                    <i class="fa-solid fa-circle-check text-success display-3"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Cảm Ơn Bạn Đã Đặt Món!</h3>
+                <p class="text-muted mb-3">Đơn hàng của bạn đã được chuyển đến hệ thống bếp nấu.</p>
+                
+                <div class="d-inline-flex align-items-center justify-content-center gap-2 p-2 px-3 bg-light rounded-pill border mx-auto mb-3">
+                    <span class="text-muted small">Mã đơn hàng:</span>
+                    <strong class="text-orange fs-5" id="displayOrderCode">{{ order.order_code }}</strong>
+                </div>
+
+                <!-- Real-time Polling Status Badge -->
+                <div class="small text-muted mb-2">
+                    <span class="spinner-grow spinner-grow-sm text-success me-1"></span>
+                    Đang kết nối truyền thông mạng thời gian thực để cập nhật trạng thái đơn...
+                </div>
+
+                <!-- Thanh Tiến Trình Trạng Thái Đơn Hàng (Progress Stepper) -->
+                <div class="order-progress-stepper my-4 px-2">
+                    <div class="step-line">
+                        <div class="step-line-active" id="progressLine" style="width: 20%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between position-relative z-1">
+                        <div class="step-point text-center active" id="step-pending">
+                            <div class="step-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                            <div class="step-label">Chờ duyệt</div>
+                        </div>
+                        <div class="step-point text-center" id="step-confirmed">
+                            <div class="step-icon"><i class="fa-solid fa-check"></i></div>
+                            <div class="step-label">Đã nhận đơn</div>
+                        </div>
+                        <div class="step-point text-center" id="step-cooking">
+                            <div class="step-icon"><i class="fa-solid fa-fire-burner"></i></div>
+                            <div class="step-label">Đang nấu</div>
+                        </div>
+                        <div class="step-point text-center" id="step-delivering">
+                            <div class="step-icon"><i class="fa-solid fa-motorcycle"></i></div>
+                            <div class="step-label">Đang giao</div>
+                        </div>
+                        <div class="step-point text-center" id="step-completed">
+                            <div class="step-icon"><i class="fa-solid fa-house-chimney"></i></div>
+                            <div class="step-label">Hoàn thành</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cancelledAlert" class="alert alert-danger py-2 mt-2" style="display: none;">
+                    <i class="fa-solid fa-circle-xmark me-1"></i> Đơn hàng này đã bị hủy.
+                </div>
+            </div>
+
+            <!-- Chi tiết đơn hàng -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3 pb-2 border-bottom">
+                    <i class="fa-solid fa-receipt text-orange me-2"></i> Chi Tiết Đơn Hàng
+                </h5>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Người nhận:</div>
+                        <div class="fw-semibold">{{ order.customer_name }} - {{ order.customer_phone }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Địa chỉ nhận hàng:</div>
+                        <div class="fw-semibold">{{ order.customer_address }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Phương thức thanh toán:</div>
+                        <div class="fw-semibold">
+                            {% if order.payment_method == 'COD' %}
+                                <span class="badge bg-secondary">Tiền mặt (COD)</span>
+                            {% elif order.payment_method == 'BANK_TRANSFER' %}
+                                <span class="badge bg-primary">Chuyển khoản VietQR</span>
+                            {% else %}
+                                <span class="badge bg-danger">Ví MoMo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Thời gian đặt:</div>
+                        <div class="fw-semibold">{{ order.created_at.strftime('%H:%M - %d/%m/%Y') }}</div>
+                    </div>
+                    {% if order.notes %}
+                    <div class="col-12">
+                        <div class="text-muted small">Ghi chú:</div>
+                        <div class="fst-italic text-secondary">"{{ order.notes }}"</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <h6 class="fw-bold mb-2">Danh sách món đã chọn:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Món ăn</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items %}
+                            <tr>
+                                <td class="fw-semibold">{{ item.food_name }}</td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">{{ item.unit_price | format_currency }}</td>
+                                <td class="text-end fw-bold">{{ item.subtotal | format_currency }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-light">
+                                <td colspan="3" class="fw-bold text-end">Tổng cộng:</td>
+                                <td class="text-end fw-extrabold text-orange fs-5">{{ order.total_price | format_currency }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between mt-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Quay Lại Trang Chủ
+                    </a>
+                    <a href="{{ url_for('track_order', code=order.order_code) }}" class="btn btn-orange rounded-pill px-4">
+                        <i class="fa-solid fa-magnifying-glass-location me-1"></i> Mở Trang Tra Cứu
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Cơ chế Truyền thông mạng thời gian thực: Client gửi HTTP GET định kỳ tới API để bắt cập nhật trạng thái
+    const orderCode = "{{ order.order_code }}";
+    const statusSequence = ['pending', 'confirmed', 'cooking', 'delivering', 'completed'];
+
+    function updateStepperUI(currentStatus) {
+        const line = document.getElementById('progressLine');
+        const cancelledAlert = document.getElementById('cancelledAlert');
+        
+        if (currentStatus === 'cancelled') {
+            cancelledAlert.style.display = 'block';
+            line.style.width = '0%';
+            statusSequence.forEach(s => {
+                document.getElementById(`step-${s}`).classList.remove('active', 'completed');
+            });
+            return;
+        }
+
+        cancelledAlert.style.display = 'none';
+        const currentIndex = statusSequence.indexOf(currentStatus);
+        
+        if (currentIndex >= 0) {
+            const percentage = (currentIndex / (statusSequence.length - 1)) * 100;
+            line.style.width = `${percentage}%`;
+
+            statusSequence.forEach((s, idx) => {
+                const el = document.getElementById(`step-${s}`);
+                if (idx < currentIndex) {
+                    el.classList.add('completed');
+                    el.classList.remove('active');
+                } else if (idx === currentIndex) {
+                    el.classList.add('active');
+                    el.classList.remove('completed');
+                } else {
+                    el.classList.remove('active', 'completed');
+                }
+            });
+        }
+    }
+
+    // Khởi tạo ban đầu
+    updateStepperUI("{{ order.status }}");
+
+    // Lặp polling qua mạng mỗi 3.5 giây
+    const pollInterval = setInterval(async () => {
+        try {
+            const res = await fetch(`/api/order/${orderCode}`);
+            const data = await res.json();
+            if (data.success && data.order) {
+                updateStepperUI(data.order.status);
+                if (data.order.status === 'completed' || data.order.status === 'cancelled') {
+                    // Dừng polling khi đơn đã kết thúc
+                    clearInterval(pollInterval);
+                }
+            }
+        } catch (e) {
+            console.warn('Lỗi kết nối mạng khi cập nhật trạng thái:', e);
+        }
+    }, 3500);
+</script>
+{% endblock %}

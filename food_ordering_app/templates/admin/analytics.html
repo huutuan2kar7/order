@@ -1,0 +1,212 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">
+            <i class="fa-solid fa-chart-pie text-orange me-2"></i> Báo Cáo Phân Tích & Vẽ Đồ Thị Thống Kê
+        </h2>
+        <p class="text-muted small mb-0">
+            Hệ thống tính toán số liệu và sinh đồ thị trực tiếp bằng <strong>Python, Pandas, Numpy & Matplotlib</strong> (Tự động cập nhật theo đơn hàng bạn nhập).
+        </p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-orange btn-sm rounded-pill px-3 fw-semibold">
+            <i class="fa-solid fa-plus-circle me-1"></i> Tự Nhập Đơn Hàng Mới
+        </a>
+        <button class="btn btn-outline-dark btn-sm rounded-pill px-3" onclick="location.reload()">
+            <i class="fa-solid fa-arrows-rotate me-1"></i> Tải Lại Dữ Liệu
+        </button>
+    </div>
+</div>
+
+<!-- Thẻ Giới Thiệu Giải Thuật Khoa Học Dữ Liệu & Trạng Thái Cập Nhật Tự Động -->
+<div class="card border-0 bg-primary bg-opacity-10 rounded-4 p-3 mb-4 border-start border-primary border-4 shadow-sm">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+            <i class="fa-solid fa-arrows-spin fa-spin text-primary fs-2"></i>
+            <div>
+                <h6 class="fw-bold text-primary mb-1">Đồ thị kết xuất tự động theo thời gian thực (Live Data Pipeline):</h6>
+                <div class="small text-dark">
+                    Khi bạn tự nhập đơn mới hoặc cập nhật trạng thái đơn:
+                    <strong>CSDL</strong> ➔ 
+                    <strong>Pandas</strong> (Trích xuất DataFrame, GroupBy, Tổng hợp) ➔ 
+                    <strong>NumPy</strong> (Tính Mean, Median, Std, Percentile, Polyfit) ➔ 
+                    <strong>Matplotlib</strong> (Dựng Canvas & Render ảnh đồ thị Base64 trực tiếp).
+                </div>
+            </div>
+        </div>
+        <span class="badge bg-success bg-opacity-75 px-3 py-2 rounded-pill">
+            <i class="fa-solid fa-bolt me-1"></i> Đang hoạt động
+        </span>
+    </div>
+</div>
+
+<!-- 1. BẢNG CHỈ SỐ THỐNG KÊ TOÁN HỌC (NUMPY STATISTICAL METRICS) -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <h5 class="fw-bold mb-0">
+            <i class="fa-solid fa-square-root-variable text-warning me-2"></i> Các Chỉ Số Thống Kê Toán Học (Tính bằng NumPy)
+        </h5>
+        <span class="badge bg-light text-dark border">
+            Dựa trên <strong>{{ charts.kpis.valid_orders_count }}</strong> đơn hàng hợp lệ
+        </span>
+    </div>
+    
+    <div class="row g-3">
+        <div class="col-sm-6 col-lg-3">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Tổng doanh thu hợp lệ:</div>
+                <div class="fs-5 fw-extrabold text-orange">{{ charts.kpis.total_revenue | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Hàm: <code>numpy.sum(arr)</code></div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Giá trị đơn trung bình (Mean):</div>
+                <div class="fs-5 fw-extrabold text-primary">{{ charts.kpis.mean_order_value | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Hàm: <code>numpy.mean(arr)</code></div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Trung vị giá trị đơn (Median):</div>
+                <div class="fs-5 fw-extrabold text-success">{{ charts.kpis.median_order_value | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Hàm: <code>numpy.median(arr)</code></div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Độ lệch chuẩn (Std Dev):</div>
+                <div class="fs-5 fw-extrabold text-danger">± {{ charts.kpis.std_order_value | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Hàm: <code>numpy.std(arr)</code></div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-4">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Phân vị 25% (Q1 - Chi tiêu thấp):</div>
+                <div class="fs-6 fw-bold text-dark">{{ charts.kpis.percentile_25 | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">25% đơn hàng có giá trị thấp hơn mức này</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-4">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Phân vị 75% (Q3 - Chi tiêu khá):</div>
+                <div class="fs-6 fw-bold text-dark">{{ charts.kpis.percentile_75 | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">75% đơn hàng có giá trị thấp hơn mức này</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-4">
+            <div class="p-3 bg-light rounded-3 border h-100">
+                <div class="text-muted small mb-1">Phân vị 90% (P90 - Khách hàng VIP):</div>
+                <div class="fs-6 fw-bold text-dark">{{ charts.kpis.percentile_90 | format_currency }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Top 10% đơn hàng có chi tiêu cao nhất</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. CÁC BIỂU ĐỒ ĐỒ HỌA TRỰC QUAN (MATPLOTLIB CHARTS) -->
+<div class="row g-4 mb-4">
+    <!-- Biểu đồ 1: Xu Hướng Doanh Thu + Tuyến Tính Polyfit -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <span class="badge bg-orange rounded-circle p-2 me-2">1</span>
+                    Xu Hướng Doanh Thu Theo Ngày & Hồi Quy Tuyến Tính (Numpy Polyfit)
+                </h5>
+                <span class="badge bg-light text-dark border">Area Chart & Trendline</span>
+            </div>
+            <p class="text-muted small mb-3">
+                Biểu đồ tự động vẽ lại theo ngày của các đơn hàng bạn đã nhập. Khi có từ 2 ngày trở lên, hàm <code>numpy.polyfit(x, y, deg=1)</code> sẽ dựng đường xu hướng dự báo chiều hướng tăng trưởng.
+            </p>
+            <div class="text-center">
+                <img src="{{ charts.revenue_trend }}" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 450px; object-fit: contain;" alt="Biểu đồ doanh thu">
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 2: Top Món Ăn Bán Chạy Nhất -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <span class="badge bg-orange rounded-circle p-2 me-2">2</span>
+                    Top Món Ăn Bán Chạy Nhất
+                </h5>
+                <span class="badge bg-light text-dark border">Horizontal Bar</span>
+            </div>
+            <p class="text-muted small mb-3">
+                Trích xuất và tổng hợp số lượng món ăn đã bán từ các đơn hàng bằng <code>pandas.groupby('food_name').sum()</code>.
+            </p>
+            <div class="text-center">
+                <img src="{{ charts.top_foods }}" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 380px; object-fit: contain;" alt="Top món ăn">
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 3: Cơ Cấu Danh Mục Món Ăn -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <span class="badge bg-orange rounded-circle p-2 me-2">3</span>
+                    Tỷ Trọng Doanh Thu Theo Danh Mục
+                </h5>
+                <span class="badge bg-light text-dark border">Donut Chart</span>
+            </div>
+            <p class="text-muted small mb-3">
+                Biểu đồ tròn khoét lỗ hiển thị cơ cấu doanh thu theo từng danh mục món ăn (Cơm, Phở, Trà sữa...).
+            </p>
+            <div class="text-center">
+                <img src="{{ charts.category_share }}" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 380px; object-fit: contain;" alt="Cơ cấu danh mục">
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 4: Khung Giờ Đặt Hàng Cao Điểm -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <span class="badge bg-orange rounded-circle p-2 me-2">4</span>
+                    Phân Bố 24 Khung Giờ Trong Ngày
+                </h5>
+                <span class="badge bg-light text-dark border">Hourly Distribution</span>
+            </div>
+            <p class="text-muted small mb-3">
+                Tự động gom nhóm giờ đặt của các đơn hàng (<code>created_at.dt.hour</code>) và làm nổi bật các khung giờ trưa & tối.
+            </p>
+            <div class="text-center">
+                <img src="{{ charts.hourly_orders }}" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 350px; object-fit: contain;" alt="Phân bố khung giờ">
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 5: Boxplot Phân Vị Chi Tiêu -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <span class="badge bg-orange rounded-circle p-2 me-2">5</span>
+                    Phân Phối Giá Trị Đơn Hàng (Boxplot)
+                </h5>
+                <span class="badge bg-light text-dark border">Boxplot Diagram</span>
+            </div>
+            <p class="text-muted small mb-3">
+                Trực quan hóa hộp phân vị chi tiêu (Q1, Median, Q3) được tính bằng hàm <code>numpy.percentile</code>.
+            </p>
+            <div class="text-center">
+                <img src="{{ charts.boxplot }}" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 350px; object-fit: contain;" alt="Boxplot phân vị">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
