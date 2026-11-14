@@ -17,6 +17,7 @@
         {% if status_counts.all > 0 %}
         <!-- Nút Xóa Toàn Bộ Đơn để nhập lại từ đầu nếu muốn -->
         <form action="{{ url_for('admin_clear_all_orders') }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa TOÀN BỘ đơn hàng trong hệ thống để nhập lại từ đầu không?');">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Xóa sạch dữ liệu đơn">
                 <i class="fa-solid fa-trash-can me-1"></i> Xóa Hết Đơn
             </button>
@@ -114,6 +115,7 @@
                     <td class="small text-muted">{{ order.created_at.strftime('%H:%M %d/%m/%Y') }}</td>
                     <td class="text-center">
                         <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST" class="d-inline-flex gap-1">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                             <select name="status" class="form-select form-select-sm rounded-pill" onchange="this.form.submit()">
                                 <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Chờ duyệt</option>
                                 <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Đã nhận</option>
@@ -159,6 +161,7 @@
             </div>
             
             <form action="{{ url_for('admin_create_order_manual') }}" method="POST">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                 <div class="modal-body p-4">
                     <div class="alert alert-info py-2 small mb-3">
                         <i class="fa-solid fa-circle-info me-1"></i> Sau khi tạo đơn, hệ thống <strong>Pandas, NumPy và Matplotlib</strong> sẽ tự động tính toán lại số liệu và vẽ lại toàn bộ 5 biểu đồ trực quan!

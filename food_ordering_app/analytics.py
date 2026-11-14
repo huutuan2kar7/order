@@ -95,6 +95,7 @@ def get_analytics_data():
     
     # Chỉ tính doanh thu các đơn hợp lệ (không bị hủy)
     valid_orders = df_orders[df_orders['status'] != 'cancelled']
+    df_items = df_items[df_items['order_id'].isin(valid_orders['id'])].copy()
     
     if not valid_orders.empty:
         revenue_array = valid_orders['total_price'].to_numpy(dtype=float)

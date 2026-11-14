@@ -1,7 +1,9 @@
 import os
+import secrets
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'food-ordering-secret-key-2026')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
     
     # Cấu hình CSDL: Hỗ trợ linh hoạt cả MySQL và SQLite
     # Nếu muốn dùng MySQL:
@@ -29,6 +31,9 @@ class Config:
         SQLALCHEMY_DATABASE_URI = SQLITE_URI
         
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', '0').lower() in ('1', 'true')
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_recycle": 280,
         "pool_pre_ping": True,

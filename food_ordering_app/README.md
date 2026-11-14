@@ -27,7 +27,7 @@ Hệ thống **không cài đặt sẵn các đơn hàng ảo**. Khi mới khở
    - Mở trang [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
    - Chọn các món ăn bạn thích, bấm **"Thêm Món"** ➔ Mở giỏ hàng ➔ Điền họ tên, số điện thoại, địa chỉ ➔ Bấm **"Xác Nhận Đặt Món"**.
 2. **Cách 2 - Quản trị viên tự nhập đơn thủ công:**
-   - Mở trang Quản trị [http://127.0.0.1:5000/admin/orders](http://127.0.0.1:5000/admin/orders) hoặc Dashboard [http://127.0.0.1:5000/admin](http://127.0.0.1:5000/admin).
+   - Đăng nhập trang Quản trị tại [http://127.0.0.1:5000/admin/login](http://127.0.0.1:5000/admin/login), sau đó mở trang Quản lý đơn hàng hoặc Dashboard.
    - Bấm nút **"Tự Nhập Đơn Hàng Mới"**.
    - Bạn có thể tùy chọn: Tên khách hàng, số điện thoại, ngày giờ đặt món, chọn món ăn trong thực đơn, số lượng, phương thức thanh toán và trạng thái đơn (Hoàn thành, Đang nấu, Đang giao...).
    - Bấm **"Lưu Đơn & Cập Nhật Biểu Đồ"**.
@@ -65,8 +65,9 @@ food_ordering_app/
     ├── index.html             # Trang chủ: Thực đơn món ăn, Lọc danh mục, Tìm kiếm
     ├── cart.html              # Trang giỏ hàng & Thanh toán (Checkout)
     ├── order_success.html     # Xác nhận đặt hàng & Stepper tiến trình trực tiếp
-    ├── track_order.html       # Tra cứu đơn hàng theo Mã hoặc Số điện thoại
+    ├── track_order.html       # Tra cứu đơn hàng theo Mã và Số điện thoại
     └── admin/
+        ├── login.html          # Đăng nhập khu vực quản trị
         ├── base_admin.html    # Khung giao diện Quản trị viên
         ├── dashboard.html     # Tổng quan & Nút tự nhập đơn nhanh
         ├── orders.html        # Quản lý đơn hàng, Modal tự nhập đơn & Xóa hết đơn
@@ -90,6 +91,14 @@ python -m pip install -r requirements.txt
 ```
 
 ### 2. Khởi chạy ứng dụng
+Thiết lập mật khẩu quản trị và khóa phiên trong PowerShell (thay mật khẩu mẫu bằng giá trị riêng):
+```powershell
+$env:ADMIN_PASSWORD = "thay-bang-mat-khau-rieng"
+$env:SECRET_KEY = (python -c "import secrets; print(secrets.token_hex(32))")
+```
+
+Giữ `SECRET_KEY` ổn định giữa các lần chạy nếu muốn phiên đăng nhập hiện tại còn hiệu lực. Không đưa mật khẩu hoặc khóa này vào Git.
+
 Chỉ cần chạy lệnh sau:
 ```bash
 python app.py
@@ -98,7 +107,11 @@ python app.py
 ### 3. Trải nghiệm trên trình duyệt
 - **Giao diện Khách hàng (Tự chọn món & Đặt đơn):**
   👉 [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+- **Đăng nhập Quản trị viên:**  
+  👉 [http://127.0.0.1:5000/admin/login](http://127.0.0.1:5000/admin/login)
 - **Giao diện Quản trị viên (Tự nhập đơn thủ công & Quản lý):**
   👉 [http://127.0.0.1:5000/admin/orders](http://127.0.0.1:5000/admin/orders)
 - **Xem trực tiếp 5 Đồ thị Matplotlib / Pandas / Numpy tự cập nhật:**
   👉 [http://127.0.0.1:5000/admin/analytics](http://127.0.0.1:5000/admin/analytics)
+
+Mặc định ứng dụng chỉ lắng nghe trên máy hiện tại và tắt Flask debug mode. Nếu cần demo qua mạng LAN, đặt `$env:HOST = "0.0.0.0"` trong PowerShell; không bật debug mode trên mạng dùng chung. Trang quản trị yêu cầu đăng nhập và các thao tác thay đổi dữ liệu được bảo vệ bằng CSRF token. Tra cứu đơn cần cả mã đơn và số điện thoại.
