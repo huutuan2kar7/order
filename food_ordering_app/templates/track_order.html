@@ -11,17 +11,27 @@
                     <i class="fa-solid fa-magnifying-glass-location text-orange me-2"></i> Tra Cứu Đơn Hàng
                 </h3>
                 <p class="text-muted small mb-4">
-                    Nhập mã đơn hàng (ví dụ: <code>ORD-2026...</code>) hoặc số điện thoại bạn đã dùng để đặt món.
+                    Nhập mã đơn hàng và số điện thoại đã dùng để đặt món.
                 </p>
 
-                <form action="{{ url_for('track_order') }}" method="GET" class="d-flex gap-2">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fa-solid fa-hashtag text-muted"></i></span>
-                        <input type="text" name="code" value="{{ query }}" class="form-control" placeholder="Mã đơn hàng hoặc Số điện thoại" required>
+                <form action="{{ url_for('track_order') }}" method="GET" class="row g-2">
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-hashtag text-muted"></i></span>
+                            <input type="text" name="code" value="{{ query }}" class="form-control" placeholder="Mã đơn hàng" required>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-orange px-4 fw-bold text-nowrap rounded-3">
-                        <i class="fa-solid fa-search me-1"></i> Tra Cứu
-                    </button>
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-phone text-muted"></i></span>
+                            <input type="tel" name="phone" value="{{ phone }}" class="form-control" placeholder="Số điện thoại đặt hàng" required>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-orange fw-bold text-nowrap rounded-3">
+                            <i class="fa-solid fa-search me-1"></i> Tra cứu
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -70,17 +80,19 @@
                         </li>
                     </ul>
 
+                    {% if order.order_code in session.get('order_access_codes', []) %}
                     <div class="text-center">
                         <a href="{{ url_for('order_success', order_code=order.order_code) }}" class="btn btn-outline-orange rounded-pill px-4">
                             <i class="fa-solid fa-eye me-1"></i> Xem Màn Hình Tiến Trình Trực Tiếp
                         </a>
                     </div>
+                    {% endif %}
                 </div>
                 {% else %}
                 <div class="alert alert-warning text-center rounded-4 py-4">
                     <i class="fa-solid fa-triangle-exclamation fs-2 mb-2"></i>
-                    <p class="mb-0 fw-semibold">Không tìm thấy đơn hàng nào khớp với thông tin: "{{ query }}"</p>
-                    <small>Vui lòng kiểm tra lại mã đơn hoặc số điện thoại.</small>
+                    <p class="mb-0 fw-semibold">Không tìm thấy đơn hàng khớp với mã đơn và số điện thoại này.</p>
+                    <small>Vui lòng kiểm tra lại cả hai thông tin.</small>
                 </div>
                 {% endif %}
             {% endif %}

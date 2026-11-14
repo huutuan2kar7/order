@@ -56,12 +56,14 @@
                         <div class="d-flex justify-content-center gap-2">
                             <!-- Nút Đổi trạng thái còn/hết -->
                             <form action="{{ url_for('admin_toggle_food', food_id=food.id) }}" method="POST">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                 <button type="submit" class="btn btn-sm {% if food.is_available %}btn-outline-warning{% else %}btn-outline-success{% endif %} rounded-pill px-2" title="Đổi trạng thái">
                                     <i class="fa-solid {% if food.is_available %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                                 </button>
                             </form>
                             <!-- Nút Xóa món -->
                             <form action="{{ url_for('admin_delete_food', food_id=food.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa món này khỏi thực đơn?');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Xóa món">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
@@ -86,6 +88,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url_for('admin_add_food') }}" method="POST">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Tên món ăn <span class="text-danger">*</span></label>

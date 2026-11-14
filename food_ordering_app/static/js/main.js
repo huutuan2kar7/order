@@ -92,6 +92,16 @@ class CartManager {
         return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
     }
 
+    escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[char]);
+    }
+
     updateBadge() {
         const badge = document.getElementById('cartCountBadge');
         if (badge) {
@@ -135,17 +145,18 @@ class CartManager {
         // Render danh sách món
         let html = '';
         this.items.forEach(item => {
+            const foodId = this.escapeHtml(item.id);
             html += `
                 <div class="drawer-item d-flex gap-3 mb-3 p-2 bg-white rounded-3 border align-items-center">
-                    <img src="${item.image}" alt="${item.name}" class="rounded-2" style="width: 50px; height: 50px; object-fit: cover;">
+                    <img src="${this.escapeHtml(item.image)}" alt="${this.escapeHtml(item.name)}" class="rounded-2" style="width: 50px; height: 50px; object-fit: cover;">
                     <div class="flex-grow-1">
-                        <div class="fw-bold small text-truncate" style="max-width: 150px;">${item.name}</div>
+                        <div class="fw-bold small text-truncate" style="max-width: 150px;">${this.escapeHtml(item.name)}</div>
                         <div class="text-orange small fw-semibold">${this.formatCurrency(item.price)}</div>
                     </div>
                     <div class="d-flex align-items-center gap-1">
-                        <button class="btn btn-sm btn-light border p-1 px-2" onclick="cartManager.updateQuantity(${item.id}, -1)">-</button>
-                        <span class="small fw-bold px-1">${item.quantity}</span>
-                        <button class="btn btn-sm btn-light border p-1 px-2" onclick="cartManager.updateQuantity(${item.id}, 1)">+</button>
+                        <button class="btn btn-sm btn-light border p-1 px-2" data-cart-action="decrease" data-food-id="${foodId}">-</button>
+                        <span class="small fw-bold px-1">${this.escapeHtml(item.quantity)}</span>
+                        <button class="btn btn-sm btn-light border p-1 px-2" data-cart-action="increase" data-food-id="${foodId}">+</button>
                     </div>
                 </div>
             `;
@@ -185,27 +196,28 @@ class CartManager {
 
         let html = '<div class="table-responsive"><table class="table align-middle"><tbody>';
         this.items.forEach(item => {
+            const foodId = this.escapeHtml(item.id);
             html += `
                 <tr>
                     <td style="width: 70px;">
-                        <img src="${item.image}" alt="${item.name}" class="rounded-3 shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                        <img src="${this.escapeHtml(item.image)}" alt="${this.escapeHtml(item.name)}" class="rounded-3 shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
                     </td>
                     <td>
-                        <div class="fw-bold text-dark">${item.name}</div>
+                        <div class="fw-bold text-dark">${this.escapeHtml(item.name)}</div>
                         <div class="text-muted small">${this.formatCurrency(item.price)}</div>
                     </td>
                     <td class="text-center" style="width: 140px;">
                         <div class="input-group input-group-sm">
-                            <button class="btn btn-outline-secondary" type="button" onclick="cartManager.updateQuantity(${item.id}, -1)">-</button>
-                            <input type="text" class="form-control text-center bg-white" value="${item.quantity}" readonly>
-                            <button class="btn btn-outline-secondary" type="button" onclick="cartManager.updateQuantity(${item.id}, 1)">+</button>
+                            <button class="btn btn-outline-secondary" type="button" data-cart-action="decrease" data-food-id="${foodId}">-</button>
+                            <input type="text" class="form-control text-center bg-white" value="${this.escapeHtml(item.quantity)}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" data-cart-action="increase" data-food-id="${foodId}">+</button>
                         </div>
                     </td>
                     <td class="text-end fw-bold text-orange" style="width: 110px;">
                         ${this.formatCurrency(item.price * item.quantity)}
                     </td>
                     <td class="text-center" style="width: 45px;">
-                        <button class="btn btn-sm text-danger border-0" onclick="cartManager.removeItem(${item.id})" title="Xóa món">
+                        <button class="btn btn-sm text-danger border-0" data-cart-action="remove" data-food-id="${foodId}" title="Xóa món">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -218,6 +230,16 @@ class CartManager {
 
     bindEvents() {
         document.addEventListener('click', (e) => {
+            const actionButton = e.target.closest('[data-cart-action]');
+            if (actionButton) {
+                const foodId = Number(actionButton.dataset.foodId);
+                if (!Number.isSafeInteger(foodId)) return;
+                if (actionButton.dataset.cartAction === 'increase') this.updateQuantity(foodId, 1);
+                if (actionButton.dataset.cartAction === 'decrease') this.updateQuantity(foodId, -1);
+                if (actionButton.dataset.cartAction === 'remove') this.removeItem(foodId);
+                return;
+            }
+
             const btn = e.target.closest('.add-to-cart-btn');
             if (btn) {
                 const food = {

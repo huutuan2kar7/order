@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập quản trị - Bếp Việt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light d-flex align-items-center min-vh-100">
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-10 col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h1 class="h4 fw-bold text-center mb-1">Đăng nhập quản trị</h1>
+                    <p class="text-muted text-center small mb-4">Bếp Việt Online</p>
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('admin_login') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                        <label for="password" class="form-label fw-semibold">Mật khẩu quản trị</label>
+                        <input id="password" name="password" type="password" class="form-control mb-3"
+                               autocomplete="current-password" required autofocus>
+                        <button type="submit" class="btn btn-orange w-100 rounded-pill fw-bold">Đăng nhập</button>
+                    </form>
+                    <a href="{{ url_for('index') }}" class="text-center small mt-3">Quay lại trang khách</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

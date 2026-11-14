@@ -59,7 +59,7 @@
             </div>
             <h3 class="fw-bold text-dark mb-1">{{ kpis.total_orders }} đơn</h3>
             <div class="small text-muted">
-                <span class="text-success fw-bold">{{ kpis.valid_orders_count }}</span> hoàn thành, 
+                <span class="text-success fw-bold">{{ kpis.valid_orders_count }}</span> chưa bị hủy, 
                 <span class="text-danger fw-bold">{{ kpis.cancelled_orders_count }}</span> hủy
             </div>
         </div>
@@ -88,10 +88,12 @@
                     <i class="fa-solid fa-bell-concierge fs-5"></i>
                 </div>
             </div>
-            <h3 class="fw-bold text-dark mb-1">{{ pending_count + cooking_count + delivering_count }} đơn</h3>
+            <h3 class="fw-bold text-dark mb-1">{{ pending_count + confirmed_count + cooking_count + delivering_count }} đơn</h3>
             <div class="small text-muted">
                 <span class="badge bg-warning text-dark">{{ pending_count }} chờ</span>
+                <span class="badge bg-info text-dark">{{ confirmed_count }} đã nhận</span>
                 <span class="badge bg-primary">{{ cooking_count }} nấu</span>
+                <span class="badge bg-warning text-dark">{{ delivering_count }} giao</span>
             </div>
         </div>
     </div>
@@ -170,24 +172,28 @@
                             <ul class="dropdown-menu dropdown-menu-end shadow">
                                 <li>
                                     <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="status" value="confirmed">
                                         <button class="dropdown-item small" type="submit"><i class="fa-solid fa-check text-info me-2"></i> Xác nhận</button>
                                     </form>
                                 </li>
                                 <li>
                                     <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="status" value="cooking">
                                         <button class="dropdown-item small" type="submit"><i class="fa-solid fa-fire-burner text-primary me-2"></i> Nấu món</button>
                                     </form>
                                 </li>
                                 <li>
                                     <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="status" value="delivering">
                                         <button class="dropdown-item small" type="submit"><i class="fa-solid fa-motorcycle text-warning me-2"></i> Bàn giao shipper</button>
                                     </form>
                                 </li>
                                 <li>
                                     <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="status" value="completed">
                                         <button class="dropdown-item small" type="submit"><i class="fa-solid fa-check-double text-success me-2"></i> Hoàn thành</button>
                                     </form>
@@ -195,6 +201,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form action="{{ url_for('admin_update_order_status', order_id=order.id) }}" method="POST">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                         <input type="hidden" name="status" value="cancelled">
                                         <button class="dropdown-item small text-danger" type="submit"><i class="fa-solid fa-xmark me-2"></i> Hủy đơn</button>
                                     </form>
@@ -227,6 +234,7 @@
             </div>
             
             <form action="{{ url_for('admin_create_order_manual') }}" method="POST">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                 <div class="modal-body p-4">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
@@ -298,18 +306,15 @@
 <script>
     if (!!window.EventSource) {
         const source = new EventSource('/api/orders/live-stream');
-        let initialLoad = true;
 
         source.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.event === 'new_order') {
-                if (!initialLoad) {
-                    const banner = document.getElementById('newOrderNotification');
-                    const msg = document.getElementById('newOrderDetail');
-                    msg.innerHTML = `Đơn mới <strong>#${data.order.order_code}</strong> từ khách hàng <strong>${data.order.customer_name}</strong> (${data.order.total_price.toLocaleString('vi-VN')} đ)`;
-                    banner.style.display = 'block';
-                }
-                initialLoad = false;
+                const banner = document.getElementById('newOrderNotification');
+                const msg = document.getElementById('newOrderDetail');
+                const total = Number(data.order.total_price).toLocaleString('vi-VN');
+                msg.textContent = `Đơn mới #${data.order.order_code} từ khách hàng ${data.order.customer_name} (${total} đ)`;
+                banner.style.display = 'block';
             }
         };
     }
